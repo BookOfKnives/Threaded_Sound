@@ -1,0 +1,13 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Run app.py",
+			"type": "debugpy",
+			"request": "launch",
+			"program": "${workspaceFolder}/src/app.py",
+			"console": "integratedTerminal",
+			"justMyCode": true
+		}
+	]
+}
