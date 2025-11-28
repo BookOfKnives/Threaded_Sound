@@ -16,6 +16,7 @@ class sound_player:
         self.interval = 0.05  # default interval between repeats in seconds
         self.repeat_thread = None
         self.channel = mixer.find_channel()
+        self.channel.set_volume(float(0.5))
 
     def play_sound_once(self):
         if self.shuffle:
@@ -51,3 +52,7 @@ class sound_player:
     
     def set_volume(self, value):
         self.channel.set_volume(float(value))
+    
+    def set_interval(self, value):
+        print("interval value:", value)
+        self.interval = value

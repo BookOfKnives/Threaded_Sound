@@ -31,12 +31,13 @@ class Sound_panel(ttk.Frame):
         self.volume_label.grid(column=0, row=1)
 
         self.volumeSlider = ttk.Scale(self, orient="horizontal", command=lambda value: self.player.set_volume(value))
+        # self.volumeSlider
         self.volumeSlider.grid(column=1, row=1)
 
         self.interval_label = ttk.Label(self, text="Interval")
         self.interval_label.grid(column=2, row=1)
 
-        self.interval_slider = ttk.Scale(self, orient="horizontal")
+        self.interval_slider = ttk.Scale(self, from_=0, to=50, orient="horizontal", command=lambda value: self.player.set_interval(value))
         self.interval_slider.grid(column=3, row=1)
 
     def toggle_shuffle(self):
