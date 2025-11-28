@@ -6,6 +6,7 @@ from tkinterdnd2 import Tk as TkinterDnDTk, DND_FILES
 from pygame import mixer
 
 import sound_panel
+import top_panel
 
 
 class App:
@@ -18,10 +19,11 @@ class App:
         self.sound_panels = []
 
         # Top frame for controls
+        self.top_frame = self.create_top_frame(self.main_frame)
 
         # Sound panel frames
         mixer.init()
-        self.create_sound_panel([pathlib.Path("test_soundfile/explode2.wav").absolute().as_posix()])
+        self.create_sound_panel([pathlib.Path("test_soundfile/explosions/explode2.wav").absolute().as_posix()])
 
         self.main_frame.mainloop()
 
@@ -34,9 +36,17 @@ class App:
 
     def create_sound_panel(self, filepaths):
         sound_panel_frame = sound_panel.Sound_panel(self.main_frame, filepaths)
-        row_position = len(self.sound_panels)
+        row_position = len(self.sound_panels) + 1 
         sound_panel_frame.grid(column=0, row=row_position, sticky="ew", padx=5, pady=5)
         self.sound_panels.append(sound_panel_frame)
+
+    def create_top_frame(self, main_frame):
+        frame = top_panel.top_panel(main_frame, self)
+        frame.grid(column=0, row=0, sticky="ew", padx=5, pady=5)
+        return frame
+
+
+
 
 
 if __name__ == "__main__":
