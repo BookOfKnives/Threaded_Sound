@@ -48,3 +48,6 @@ class sound_player:
     def stop_repeat_sound(self):
         self.repeat = False
         self.channel.fadeout(1000)
+    
+    def set_volume(self, value):
+        self.channel.set_volume(float(value))

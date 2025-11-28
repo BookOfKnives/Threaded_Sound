@@ -30,7 +30,7 @@ class Sound_panel(ttk.Frame):
         self.volume_label = ttk.Label(self, text="VOL")
         self.volume_label.grid(column=0, row=1)
 
-        self.volumeSlider = ttk.Scale(self, orient="horizontal")
+        self.volumeSlider = ttk.Scale(self, orient="horizontal", command=lambda value: self.player.set_volume(value))
         self.volumeSlider.grid(column=1, row=1)
 
         self.interval_label = ttk.Label(self, text="Interval")
