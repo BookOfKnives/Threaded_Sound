@@ -21,7 +21,7 @@ class App:
 
         # Sound panel frames
         mixer.init()
-        self.create_sound_panel([pathlib.Path("test_soundfile/explode2.wav").absolute().as_posix()])
+        self.create_sound_panel([pathlib.Path("test_soundfile/explosions/explode2.wav").absolute().as_posix()])
 
         self.main_frame.mainloop()
 
