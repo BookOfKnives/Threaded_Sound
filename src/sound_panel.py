@@ -24,7 +24,7 @@ class Sound_panel(ttk.Frame):
         self.shuffleButton.grid(column=3, row=0)
         self.shuffleButton.config(command=self.toggle_shuffle)
 
-        self.closeButton = ttk.Button(self, text="X", command=self.destroy)
+        self.closeButton = ttk.Button(self, text="X", command=self.close)
         self.closeButton.grid(column=4, row=0)
 
         self.volume_label = ttk.Label(self, text="VOL")
@@ -38,6 +38,11 @@ class Sound_panel(ttk.Frame):
 
         self.interval_slider = ttk.Scale(self, orient="horizontal")
         self.interval_slider.grid(column=3, row=1)
+    
+    def close(self):
+        """Clean up resources before destroying the panel"""
+        self.player.destroy()
+        self.destroy()
 
     def toggle_shuffle(self):
         self.player.shuffle = not self.player.shuffle

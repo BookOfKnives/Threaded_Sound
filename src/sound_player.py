@@ -4,6 +4,8 @@ import random
 import threading
 
 class sound_player:
+    _used_channels = set()  # Class variable to track which channels are in use
+    
     def __init__(self, filepaths : list[str]):
         if mixer.get_init() is None:
             raise Exception("Pygame mixer not initialized.")
@@ -15,7 +17,11 @@ class sound_player:
         self.current_sound_index = 0
         self.interval = 0.05  # default interval between repeats in seconds
         self.repeat_thread = None
-        self.channel = mixer.find_channel()
+        
+        # Allocate a unique channel for this sound_player
+        self.channel_id = self._find_free_channelID()
+        self.channel = mixer.Channel(self.channel_id)
+        sound_player._used_channels.add(self.channel_id)
 
     def play_sound_once(self):
         if self.shuffle:
@@ -41,8 +47,8 @@ class sound_player:
             self.channel.play(sound)
             while self.channel.get_busy() and self.repeat:  # Wait until the sound has finished playing
                 pygame.time.delay(10)  # Small delay to avoid busy-waiting
-            # Add random +-10% variation to the interval
-            variation = random.uniform(0.9, 1.1)
+            
+            variation = random.uniform(0.9, 1.1) # Add random +-10% variation to the interval
             pygame.time.delay(int(self.interval * 1000 * variation))  # delay expects milliseconds
 
     def stop_repeat_sound(self):
@@ -51,3 +57,25 @@ class sound_player:
     
     def set_volume(self, value):
         self.channel.set_volume(float(value))
+    
+    def destroy(self):
+        """Stop playback and release the channel"""
+        self.stop_repeat_sound()
+        sound_player._used_channels.discard(self.channel_id)
+    
+    def __del__(self):
+        """Release the channel when this sound_player is destroyed"""
+        self.destroy()
+
+    def _find_free_channelID(self):
+        """Find and return a free channel ID, expanding channels if necessary."""
+        num_channels = mixer.get_num_channels()
+        channel_id = 0
+        while channel_id in sound_player._used_channels:
+            channel_id += 1
+        
+        # Expand channels if needed
+        if channel_id >= num_channels:
+            mixer.set_num_channels(channel_id + 1)
+        
+        return channel_id
