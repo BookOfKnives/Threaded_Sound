@@ -61,8 +61,8 @@ class sound_player:
     
     def set_interval(self, value):
         print("interval value:", value)
-        self.interval = value
-        
+        self.interval = float(value)
+
     def destroy(self):
         """Stop playback and release the channel"""
         self.stop_repeat_sound()
