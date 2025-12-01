@@ -3,52 +3,74 @@ import tkinter as tk
 from tkinter import ttk
 
 import sound_player
+import sound_panel_settings
 
 class Sound_panel(ttk.Frame):
-    def __init__(self, parent, filepaths : list[str]= []):
-        super().__init__(parent, relief="groove")
+    _instance_counter = 0  # Class variable to track instances
+    
+    def __init__(self, parent, filepaths : list[str]= [], bg_color=None, keybind_manager=None, on_close_callback=None):
+        # Create background frame first
+        self.bg_frame = tk.Frame(parent)
+        
+        # Create unique style for this instance
+        Sound_panel._instance_counter += 1
+        self._keybind_manager = keybind_manager  # Store keybind manager reference for settings
+        self._on_close_callback = on_close_callback  # Callback to notify when panel is closed
+        self.style_name = f"SoundPanel{Sound_panel._instance_counter}.TFrame"
+        self.label_style_name = f"SoundPanel{Sound_panel._instance_counter}.TLabel"
+        self.button_style_name = f"SoundPanel{Sound_panel._instance_counter}.TButton"
+        self.scale_style_name = f"SoundPanel{Sound_panel._instance_counter}.Horizontal.TScale"
+        
+        # Initialize as child of bg_frame
+        super().__init__(self.bg_frame, relief="groove", style=self.style_name)
 
         self.player = sound_player.sound_player(filepaths)
+        self.settings_window = None  # Track the settings window
         
-        self.grid()
+        # Pack self into bg_frame
+        self.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # Apply background color using update_bg_color method
+        if bg_color:
+            self.update_bg_color(bg_color)
 
         #setup name frame
-        self.name_frame = ttk.Frame(self, relief="raised")
+        self.name_frame = ttk.Frame(self, relief="raised", style=self.style_name)
         self.name_frame.grid(column=0, row=0, columnspan=5, sticky="ew")
 
-        self.name = ttk.Label(self.name_frame, text=Path(filepaths[0]).name if filepaths else "Sound Panel")
+        self.name = ttk.Label(self.name_frame, text=Path(filepaths[0]).name if filepaths else "Sound Panel", style=self.label_style_name)
         self.name.grid(column=0, row=0, sticky="w", padx=5)
 
-        self.editNameButton = ttk.Button(self.name_frame, text="✏", command=self.edit_name, width=3)
+        self.editNameButton = ttk.Button(self.name_frame, text="✏", command=self.edit_name, width=3, style=self.button_style_name)
         self.editNameButton.grid(column=1, row=0, sticky="w", padx=0)
 
-        self.settingsButton = ttk.Button(self.name_frame, text="⚙", command=self.open_settings, width=3)
+        self.settingsButton = ttk.Button(self.name_frame, text="⚙", command=self.open_settings, width=3, style=self.button_style_name)
         self.settingsButton.grid(column=2, row=0, sticky="w", padx=0)
 
-        self.closeButton = ttk.Button(self.name_frame, text="X", command=self.close, width=3)
+        self.closeButton = ttk.Button(self.name_frame, text="X", command=self.close, width=3, style=self.button_style_name)
         self.closeButton.grid(column=3, row=0, sticky="e", padx=0)
     
         self.name_frame.columnconfigure(0, weight=1)
 
 
         # Setup control buttons and sliders
-        self.startButton = ttk.Button(self, text="Play", command=self.player.play_sound_once, width=6)
+        self.startButton = ttk.Button(self, text="Play", command=self.player.play_sound_once, width=6, style=self.button_style_name)
         self.startButton.grid(column=0, row=1)
 
-        self.stopButton = ttk.Button(self, text="Stop", command=self.player.stop_repeat_sound, width=6)
+        self.stopButton = ttk.Button(self, text="Stop", command=self.player.stop_repeat_sound, width=6, style=self.button_style_name)
         self.stopButton.grid(column=1, row=1)
 
-        self.repeatButton = ttk.Button(self, text="Repeat", command=self.player.play_sound_repeat, width=6)
+        self.repeatButton = ttk.Button(self, text="Repeat", command=self.player.play_sound_repeat, width=6, style=self.button_style_name)
         self.repeatButton.grid(column=2, row=1)
 
         # self.shuffleButton = ttk.Checkbutton(self, text="Shuffle")
         # self.shuffleButton.grid(column=3, row=1)
         # self.shuffleButton.config(command=self.toggle_shuffle)
 
-        self.volume_label = ttk.Label(self, text="VOL")
+        self.volume_label = ttk.Label(self, text="VOL", style=self.label_style_name)
         self.volume_label.grid(column=3, row=1)
 
-        self.volumeSlider = ttk.Scale(self, orient="horizontal", command=lambda value: self.player.set_volume(value))
+        self.volumeSlider = ttk.Scale(self, orient="horizontal", command=lambda value: self.player.set_volume(value), style=self.scale_style_name)
         self.volumeSlider.set(0.5)
         self.volumeSlider.grid(column=4, row=1, sticky="ew")
         
@@ -61,10 +83,35 @@ class Sound_panel(ttk.Frame):
         # self.interval_slider = ttk.Scale(self, from_=0, to=50, orient="horizontal", command=self.setInterval)
         # self.interval_slider.grid(column=3, row=2)
     
+    def update_bg_color(self, new_bg_color):
+        """Update the background color of the panel and all its widgets"""
+        # Update bg_frame
+        self.bg_frame.config(bg=new_bg_color)
+        
+        # Update ttk styles
+        style = ttk.Style()
+        style.configure(self.style_name, background=new_bg_color)
+        style.configure(self.label_style_name, background=new_bg_color)
+        style.configure(self.button_style_name, background=new_bg_color)
+        style.map(self.button_style_name, background=[('active', new_bg_color), ('!active', new_bg_color)])
+        style.configure(self.scale_style_name, background=new_bg_color, troughcolor=new_bg_color)
+    
     def close(self):
         """Clean up resources before destroying the panel"""
+        # Unregister keybind if it exists
+        if self._keybind_manager and self.player.keybind:
+            self._keybind_manager.unregister(self.player.play_sound_once)
+        
+        # Notify parent via callback
+        if self._on_close_callback:
+            self._on_close_callback(self)
+        
+        # Destroy player
         self.player.destroy()
+        
+        # Destroy panel and bg_frame
         self.destroy()
+        self.bg_frame.destroy()
 
     def toggle_shuffle(self):
         self.player.shuffle = not self.player.shuffle
@@ -99,8 +146,15 @@ class Sound_panel(ttk.Frame):
             self.name.grid(column=0, row=0, sticky="w", padx=5)
     
     def open_settings(self):
-        """Open settings panel or dialog"""
-        # Placeholder for settings functionality
-        print("Settings button clicked")
+        """Open settings popup dialog"""
+        # If settings window already exists, bring it to front
+        if self.settings_window and self.settings_window.winfo_exists():
+            self.settings_window.lift()
+            self.settings_window.focus()
+            return
+        
+        # Create new settings window
+        panel_name = self.name.cget("text")
+        self.settings_window = sound_panel_settings.sound_panel_settings(self, self.player, panel_name, self._keybind_manager)
 
 

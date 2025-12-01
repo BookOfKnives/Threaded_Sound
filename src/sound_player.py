@@ -11,9 +11,11 @@ class sound_player:
             raise Exception("Pygame mixer not initialized.")
         if not filepaths:
             raise ValueError("No filepaths provided to sound_player.")
+        self.filepaths = filepaths
         self.sounds = [mixer.Sound(file) for file in filepaths]
         self.repeat = False
         self.shuffle = False
+        self.keybind = ""  # Global keybind for this sound player
         self.current_sound_index = 0
         self.interval = 0.05  # default interval between repeats in seconds
         self.repeat_thread = None
