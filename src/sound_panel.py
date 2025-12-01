@@ -65,13 +65,12 @@ class Sound_panel(ttk.Frame):
     def mouse_wheel_adjust_volume(self, event):
         adjustment_step = 0.025
         if event.delta > 0:
-            print("going up")
             self.player.set_volume(self.player.get_volume() + adjustment_step)
             self.volumeSlider.set(self.player.get_volume() + adjustment_step)
         else:
             self.player.set_volume(self.player.get_volume() - adjustment_step)
             self.volumeSlider.set(self.player.get_volume() - adjustment_step)
-            print("going down")
+
     def close(self):
         """Clean up resources before destroying the panel"""
         self.player.destroy()
