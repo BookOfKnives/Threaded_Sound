@@ -28,7 +28,14 @@ class App:
         mixer.init()
         self.create_sound_panel([pathlib.Path("test_soundfile/explosions/explode2.wav").absolute().as_posix()])
 
+        self.hit_it_counter = 0
+        self.main_frame.bind('a', self.hit_it)
+
         self.main_frame.mainloop()
+    
+    def hit_it(self, event):
+        self.hit_it_counter += 1
+        print(f'Hitting it! {self.hit_it_counter}')
 
     def on_drop(self, event):
         """This is the function that handles the drag-dropped file."""
