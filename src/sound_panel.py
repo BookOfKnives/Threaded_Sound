@@ -153,6 +153,7 @@ class Sound_panel(ttk.Frame):
         """Open settings popup dialog"""
         # If settings window already exists, bring it to front
         if self.settings_window and self.settings_window.winfo_exists():
+            self.settings_window.deiconify()
             self.settings_window.lift()
             self.settings_window.focus()
             return

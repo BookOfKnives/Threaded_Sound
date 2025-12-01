@@ -18,9 +18,6 @@ class sound_panel_settings(tk.Toplevel):
         self.title(f"Settings - {panel_name}")
         self.resizable(True, True)
         
-        # Make it modeless so multiple can be open
-        self.transient(parent)
-        
         # Configure window grid to expand
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
