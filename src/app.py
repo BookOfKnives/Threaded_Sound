@@ -17,6 +17,9 @@ class App:
         self.main_frame.drop_target_register(DND_FILES)
         self.main_frame.dnd_bind('<<Drop>>', self.on_drop) 
         self.sound_panels = []
+        
+        # Make the column expand to fill the window
+        self.main_frame.columnconfigure(0, weight=1)
 
         # Top frame for controls
         self.top_frame = self.create_top_frame(self.main_frame)
@@ -38,8 +41,16 @@ class App:
         sound_panel_frame = sound_panel.Sound_panel(self.main_frame, filepaths)
         row_position = len(self.sound_panels) + 1 
         sound_panel_frame.grid(column=0, row=row_position, sticky="ew", padx=5, pady=5)
+        
+        # Create a unique style for this panel
+        style_name = f"Panel{row_position}.TFrame"
+        style = ttk.Style()
+        bg_color = "#f0f0f0" if row_position % 2 == 0 else "#ffffff"
+        style.configure(style_name, background=bg_color)
+        sound_panel_frame.configure(style=style_name)
+        
         self.sound_panels.append(sound_panel_frame)
-
+        
     def create_top_frame(self, main_frame):
         frame = top_panel.top_panel(main_frame, self)
         frame.grid(column=0, row=0, sticky="ew", padx=5, pady=5)
