@@ -51,6 +51,7 @@ class Sound_panel(ttk.Frame):
         self.volumeSlider = ttk.Scale(self, orient="horizontal", command=lambda value: self.player.set_volume(value))
         self.volumeSlider.set(0.5)
         self.volumeSlider.grid(column=4, row=1, sticky="ew")
+        self.volumeSlider.bind('<MouseWheel>', self.mouse_wheel_adjust_volume)
         
         # Make the slider column expand
         self.columnconfigure(4, weight=1)
@@ -61,6 +62,16 @@ class Sound_panel(ttk.Frame):
         # self.interval_slider = ttk.Scale(self, from_=0, to=50, orient="horizontal", command=self.setInterval)
         # self.interval_slider.grid(column=3, row=2)
     
+    def mouse_wheel_adjust_volume(self, event):
+        adjustment_step = 0.025
+        if event.delta > 0:
+            print("going up")
+            self.player.set_volume(self.player.get_volume() + adjustment_step)
+            self.volumeSlider.set(self.player.get_volume() + adjustment_step)
+        else:
+            self.player.set_volume(self.player.get_volume() - adjustment_step)
+            self.volumeSlider.set(self.player.get_volume() - adjustment_step)
+            print("going down")
     def close(self):
         """Clean up resources before destroying the panel"""
         self.player.destroy()

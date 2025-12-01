@@ -3,6 +3,11 @@ import pygame
 import random
 import threading
 
+"""0112 2025
+10:57
+contains all sound-playing logic, volume, repeat, intervals, etc.
+"""
+
 class sound_player:
     _used_channels = set()  # Class variable to track which channels are in use
     
@@ -11,25 +16,27 @@ class sound_player:
             raise Exception("Pygame mixer not initialized.")
         if not filepaths:
             raise ValueError("No filepaths provided to sound_player.")
-        self.sounds = [mixer.Sound(file) for file in filepaths]
-        self.repeat = False
-        self.shuffle = False
-        self.current_sound_index = 0
-        self.interval = 0.05  # default interval between repeats in seconds
+        self._settings = _sound_settings()
+        self._settings.repeat = False
+        self._settings.shuffle = False
+        self._current_sound_index = 0
+        self._settings.interval = 0.05  # default interval between repeats in seconds
+        self._settings.volume = 0.5
         self.repeat_thread = None
+        self.sounds = [mixer.Sound(file) for file in filepaths]
         
         # Allocate a unique channel for this sound_player
         self.channel_id = self._find_free_channelID()
         self.channel = mixer.Channel(self.channel_id)
         sound_player._used_channels.add(self.channel_id)
-        self.channel.set_volume(float(0.5))
+        self.channel.set_volume(float(self._settings.volume))
 
     def play_sound_once(self):
-        if self.shuffle:
+        if self._settings.shuffle:
             sound = self.sounds[random.randint(0, len(self.sounds) - 1)]
         else:
-            sound = self.sounds[self.current_sound_index]
-            self.current_sound_index = (self.current_sound_index + 1) % len(self.sounds)
+            sound = self.sounds[self._current_sound_index]
+            self._current_sound_index = (self._current_sound_index + 1) % len(self.sounds)
         self.channel.play(sound)
 
     def play_sound_repeat(self):
@@ -40,24 +47,25 @@ class sound_player:
 
     def _repeat_loop(self):
         while self.repeat:
-            if self.shuffle:
+            if self._settings.shuffle:
                 sound = self.sounds[random.randint(0, len(self.sounds) - 1)]
             else:
-                sound = self.sounds[self.current_sound_index]
-                self.current_sound_index = (self.current_sound_index + 1) % len(self.sounds)
+                sound = self.sounds[self._current_sound_index]
+                self._current_sound_index = (self._current_sound_index + 1) % len(self.sounds)
             self.channel.play(sound)
             while self.channel.get_busy() and self.repeat:  # Wait until the sound has finished playing
                 pygame.time.delay(10)  # Small delay to avoid busy-waiting
             
             variation = random.uniform(0.9, 1.1) # Add random +-10% variation to the interval
-            pygame.time.delay(int(self.interval * 1000 * variation))  # delay expects milliseconds
+            pygame.time.delay(int(self._settings.interval * 1000 * variation))  # delay expects milliseconds
 
     def stop_repeat_sound(self):
         self.repeat = False
         self.channel.fadeout(1000)
     
     def set_volume(self, value):
-        self.channel.set_volume(float(value))
+        self._settings.volume = float(value)
+        self.channel.set_volume(self._settings.volume)
     
     def set_interval(self, value):
         print("interval value:", value)
@@ -84,3 +92,25 @@ class sound_player:
             mixer.set_num_channels(channel_id + 1)
         
         return channel_id
+    
+    def get_settings(self):
+        """Exposes private sound settings for saving func."""
+        print("hitting get_settings")
+        print(self._settings)
+
+    def get_volume(self):
+        return self._settings.volume
+
+class _sound_settings:
+    """0112 2025
+    11:00
+    contains all info necessary to create sound_panel from a saved state."""
+    def __init__(self):
+        self.repeat = False
+        self.shuffle = False
+        self.interval = 0.05
+        self.filepaths = []
+        self.channel_volume : float = 0.5  
+
+    def __str__(self):
+        return "str of _sound_settings: \n" + "Repeats: " + str(self.repeat) + ", Shuffle: " +  str(self.shuffle)
