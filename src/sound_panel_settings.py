@@ -12,7 +12,7 @@ class sound_panel_settings(tk.Toplevel):
         super().__init__(parent)
         self.player = player
         self.keybind_manager = keybind_manager
-        self.old_keybind = player.keybind
+        self.old_keybind = player.get_keybind()
         
         # Configure the popup window
         self.title(f"Settings - {panel_name}")
@@ -35,13 +35,13 @@ class sound_panel_settings(tk.Toplevel):
         
         # Keybind entry
         ttk.Label(global_frame, text="Keybind:").grid(column=0, row=0, sticky="w", padx=(0, 5))
-        self.keybind_var = tk.StringVar(value=getattr(self.player, 'keybind', ''))
+        self.keybind_var = tk.StringVar(value=self.player.get_keybind())
         self.keybind_entry = ttk.Entry(global_frame, textvariable=self.keybind_var, width=15)
         self.keybind_entry.grid(column=1, row=0, sticky="w", padx=5)
         self.keybind_entry.bind("<KeyRelease>", self.update_keybind)
         
         # Shuffle checkbox
-        self.shuffle_var = tk.BooleanVar(value=self.player.shuffle)
+        self.shuffle_var = tk.BooleanVar(value=self.player.get_shuffle())
         self.shuffle_check = ttk.Checkbutton(global_frame, text="Shuffle", variable=self.shuffle_var, command=self.update_shuffle)
         self.shuffle_check.grid(column=2, row=0, sticky="w", padx=15)
         
@@ -60,7 +60,7 @@ class sound_panel_settings(tk.Toplevel):
         
         # Create _sound_setting for each sound
         self.sound_settings = []
-        for i, (sound, filepath) in enumerate(zip(self.player.sounds, self.player.filepaths)):
+        for i, (sound, filepath) in enumerate(zip(self.player.sounds, self.player.get_filepaths())):
             filename = Path(filepath).name
             sound_setting = _sound_setting(scrollable_frame, sound, filename)
             sound_setting.grid(column=0, row=i, sticky="ew", padx=5, pady=2)
@@ -85,7 +85,7 @@ class sound_panel_settings(tk.Toplevel):
     
     def update_shuffle(self):
         """Update shuffle setting in real-time"""
-        self.player.shuffle = self.shuffle_var.get()
+        self.player.set_shuffle(self.shuffle_var.get())
     
     def update_keybind(self, event=None):
         """Update keybind setting in real-time"""
@@ -93,7 +93,7 @@ class sound_panel_settings(tk.Toplevel):
         if self.keybind_manager:
             self.keybind_manager.update(self.player.play_sound_once, self.old_keybind, new_keybind)
             self.old_keybind = new_keybind
-        self.player.keybind = new_keybind
+        self.player.set_keybind(new_keybind)
 
 class _sound_setting(ttk.Frame):
     def __init__(self, parent, sound: mixer.Sound, filepath: str):

@@ -33,18 +33,35 @@ class App:
         mixer.init()
         self.create_sound_panel([pathlib.Path("test_soundfile/explosions/explode2.wav").absolute().as_posix()])
 
+        self.hit_it_counter = 0
+        self.main_frame.bind('a', self.hit_it)
+        self.main_frame.bind('b', self.hit_display_settings)
+        self.main_frame.bind('<Return>', self.quit_it)
+        self.main_frame.bind('<Escape>', self.quit_it)
+
         self.main_frame.mainloop()
+    
+    def hit_it(self, event):
+        self.hit_it_counter += 1
+        print(f'Hitting it! {self.hit_it_counter}')
+
+    def hit_display_settings(self, event):
+        for panel in self.sound_panels:
+            print(panel.player.get_settings())
+        # print(self.sound_panels[0].player.get_settings())
+        
+
+    def quit_it(self, event):
+        print("Quitting it.")
+        self.main_frame.destroy()
 
     def on_drop(self, event):
         """This is the function that handles the drag-dropped file."""
-        print("File dropped:", event.data)
         files = list(self.main_frame.tk.splitlist(event.data))
-        print("Files list:", files)
         self.create_sound_panel(files)
 
     def create_sound_panel(self, filepaths):
         row_position = len(self.sound_panels) + 1
-        print(row_position)
         
         # Create a colored background frame with alternating colors
         bg_color = "#d4e6f1" if row_position % 2 == 0 else "#f8f9f9"
@@ -64,8 +81,8 @@ class App:
         self.sound_panels.append(sound_panel_frame)
         
         # Register global hotkey if keybind is set
-        if sound_panel_frame.player.keybind:
-            self.keybind_manager.register(sound_panel_frame.player.keybind, sound_panel_frame.player.play_sound_once)
+        if sound_panel_frame.player.get_keybind():
+            self.keybind_manager.register(sound_panel_frame.player.get_keybind(), sound_panel_frame.player.play_sound_once)
         
     def create_top_frame(self, main_frame):
         frame = top_panel.top_panel(main_frame, self)

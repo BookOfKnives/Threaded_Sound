@@ -73,15 +73,10 @@ class Sound_panel(ttk.Frame):
         self.volumeSlider = ttk.Scale(self, orient="horizontal", command=lambda value: self.player.set_volume(value), style=self.scale_style_name)
         self.volumeSlider.set(0.5)
         self.volumeSlider.grid(column=4, row=1, sticky="ew")
+        self.volumeSlider.bind('<MouseWheel>', self.mouse_wheel_adjust_volume)
         
         # Make the slider column expand
         self.columnconfigure(4, weight=1)
-
-        # self.interval_label = ttk.Label(self, text="Interval")
-        # self.interval_label.grid(column=2, row=2)
-
-        # self.interval_slider = ttk.Scale(self, from_=0, to=50, orient="horizontal", command=self.setInterval)
-        # self.interval_slider.grid(column=3, row=2)
     
     def update_bg_color(self, new_bg_color):
         """Update the background color of the panel and all its widgets"""
@@ -96,10 +91,19 @@ class Sound_panel(ttk.Frame):
         style.map(self.button_style_name, background=[('active', new_bg_color), ('!active', new_bg_color)])
         style.configure(self.scale_style_name, background=new_bg_color, troughcolor=new_bg_color)
     
+    def mouse_wheel_adjust_volume(self, event):
+        adjustment_step = 0.025
+        if event.delta > 0:
+            self.player.set_volume(self.player.get_volume() + adjustment_step)
+            self.volumeSlider.set(self.player.get_volume() + adjustment_step)
+        else:
+            self.player.set_volume(self.player.get_volume() - adjustment_step)
+            self.volumeSlider.set(self.player.get_volume() - adjustment_step)
+
     def close(self):
         """Clean up resources before destroying the panel"""
         # Unregister keybind if it exists
-        if self._keybind_manager and self.player.keybind:
+        if self._keybind_manager and self.player.get_keybind():
             self._keybind_manager.unregister(self.player.play_sound_once)
         
         # Notify parent via callback
@@ -114,7 +118,7 @@ class Sound_panel(ttk.Frame):
         self.bg_frame.destroy()
 
     def toggle_shuffle(self):
-        self.player.shuffle = not self.player.shuffle
+        self.player.set_shuffle(not self.player.get_shuffle())
 
     def setInterval(self, value):
         fvalue = round(float(value), 3)

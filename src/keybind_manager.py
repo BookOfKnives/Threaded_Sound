@@ -19,7 +19,6 @@ class KeybindManager:
                 keyboard.add_hotkey(keybind, lambda k=keybind: self._trigger_callbacks(k), suppress=False)
                 self.registered_hotkeys[keybind] = []
             except Exception as e:
-                print(f"Failed to register keybind '{keybind}': {e}")
                 return
         
         # Add callback to the list for this keybind
@@ -34,7 +33,7 @@ class KeybindManager:
                 try:
                     callback()
                 except Exception as e:
-                    print(f"Error triggering callback for '{keybind}': {e}")
+                    pass
     
     def unregister(self, callback):
         """Unregister a specific callback"""
@@ -54,7 +53,7 @@ class KeybindManager:
                     keyboard.remove_hotkey(keybind)
                     del self.registered_hotkeys[keybind]
                 except Exception as e:
-                    print(f"Failed to unregister keybind '{keybind}': {e}")
+                    pass
     
     def update(self, callback, old_keybind, new_keybind):
         """Update a callback's keybind by removing from old and registering to new"""
