@@ -40,6 +40,9 @@ class sound_panel_settings(tk.Toplevel):
         self.shuffle_var = tk.BooleanVar(value=self.player.get_shuffle())
         self.shuffle_check = ttk.Checkbutton(global_frame, text="Shuffle", variable=self.shuffle_var, command=self.update_shuffle)
         self.shuffle_check.grid(column=2, row=0, sticky="w", padx=15)
+
+        self.save_button = ttk.Button(global_frame, text="Save", command=self.player.save_settings)
+        self.save_button.grid(column=3, row=0, sticky="w", padx=5)
         
         # Create scrollable frame for sound settings if there are many sounds
         canvas = tk.Canvas(main_frame)

@@ -119,7 +119,7 @@ class sound_player:
         
         return channel_id
     
-    def get_settings(self):
+    def get_settings(self): 
         """Exposes private sound settings for saving func."""
         print("hitting get_settings")
         print(self._settings)
@@ -151,11 +151,10 @@ class _sound_settings:
         self.files = []
         self.channel_volume : float = 0.5  
         self.keybind = ""
-
+        
     def __str__(self):
         return "str of _sound_settings: \n" + "Repeats: " + str(self.repeat) + ", Shuffle: " +  str(self.shuffle)
-    
-
+   
 class _sound_file_setting:
     def __init__(self, filepath: str, volume: float = 0.5, interval: float = 0.05):
         self.name = filepath.split("/")[-1]  # Extract the file name from the path

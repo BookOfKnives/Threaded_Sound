@@ -4,16 +4,27 @@ class for saving the sound information. It should take some settings data, and s
 """
 
 import json
+import pathlib
+
+#make file dialog
 
 def save_settings(sound_player):
-    #with open('settings.json', 'w') as json_file:
-#this assumes the json  is ready to print
-        #json.dump(sound_player, json_file)
-    format_for_json(sound_player)
+    """write the file to  disk."""
+    json_savefile = format_for_json(sound_player)
+    try:
+        with open(pathlib.Path('saves/save.json'), 'w') as file: 
+            json.dump(json_savefile, file)
+        print("operation complete")
+    except Exception as e:
+        print(f'An error occured in save_settings() in {__name__}: {e}')
 
 def format_for_json(sound_player): 
-    #this  shoiuld make the json from t he settings
+    """formats the sound settings into json"""
     json_savefile = {
-        "volume": sound_player.get_volume()
+        "volume": sound_player.get_volume(),
+        "keybind": sound_player.get_keybind(),
+        "shuffle": sound_player.get_shuffle(),
+        "filepaths": sound_player.get_filepaths(),
     }
-    print("new jsoin:", json_savefile)
+    return json_savefile
+
