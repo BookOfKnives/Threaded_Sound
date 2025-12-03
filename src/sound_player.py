@@ -26,8 +26,11 @@ class sound_player:
         self._settings.interval = 0.05  # default interval between repeats in seconds
         self._settings.channel_volume = 0.5
         
-        # Make set: _sound_file_setting -> mixer.Sound
-        self.sounds = {file_setting: mixer.Sound(file_setting.filepath) for file_setting in self._settings.files}
+        # Create sound objects for each file
+        self.sounds = {}
+        for i, file_setting in enumerate(self._settings.files):
+            sound = mixer.Sound(file_setting.filepath)
+            self.sounds[i] = {'sound': sound, 'settings': file_setting}
         
         # Setup variables for playback control
         self.repeat_thread = None
@@ -47,9 +50,9 @@ class sound_player:
 
     def play_sound_once(self):
         if self._settings.shuffle:
-            sound = random.choice(list(self.sounds.values()))
+            sound = self.sounds[random.choice(list(self.sounds.keys()))]['sound']
         else:
-            sound = self.sounds[self._settings.files[self._current_sound_index]]
+            sound = self.sounds[self._current_sound_index]['sound']
             self._current_sound_index = (self._current_sound_index + 1) % len(self._settings.files)
         self.channel.play(sound)
 
@@ -62,16 +65,18 @@ class sound_player:
     def _repeat_loop(self):
         while self._settings.repeat:
             if self._settings.shuffle:
-                sound = random.choice(list(self.sounds.values()))
+                sound_id = random.choice(list(self.sounds.keys()))
+                sound = self.sounds[sound_id]['sound']
+                interval = self.sounds[sound_id]['settings'].interval
             else:
-                sound = self.sounds[self._settings.files[self._current_sound_index]]
+                sound = self.sounds[self._current_sound_index]['sound']
+                interval = self.sounds[self._current_sound_index]['settings'].interval
                 self._current_sound_index = (self._current_sound_index + 1) % len(self._settings.files)
             self.channel.play(sound)
             while self.channel.get_busy() and self._settings.repeat:  # Wait until the sound has finished playing
                 pygame.time.delay(10)  # Small delay to avoid busy-waiting
             
-            variation = random.uniform(0.9, 1.1) # Add random +-10% variation to the interval
-            pygame.time.delay(int(self._settings.interval * 1000 * variation))  # delay expects milliseconds
+            pygame.time.delay(int((self._settings.interval + interval) * 1000))  # delay expects milliseconds
 
     def stop_repeat_sound(self):
         self._settings.repeat = False
@@ -132,8 +137,47 @@ class sound_player:
     def get_shuffle(self):
         return self._settings.shuffle
     
+    def get_interval(self):
+        return self._settings.interval
+    
+    def set_interval(self, interval: float):
+        self._settings.interval = float(interval)
+    
     def get_filepaths(self):
         return [file.filepath for file in self._settings.files]
+
+    def get_sound_indexes(self):
+        return list(self.sounds.keys())
+    
+    def _validate_index(self, index: int):
+        """Validate that an index exists in sounds dictionary"""
+        if index not in self.sounds:
+            raise ValueError(f"Sound index {index} not found.")
+    
+    def get_name_per_id(self, index: int):
+        self._validate_index(index)
+        return self.sounds[index]['settings'].name
+    
+    def get_interval_per_id(self, index: int):
+        self._validate_index(index)
+        return self.sounds[index]['settings'].interval
+        
+    def get_volume_per_id(self, index: int):
+        self._validate_index(index)
+        return self.sounds[index]['settings'].volume
+        
+    def set_name_per_id(self, index: int, name: str):
+        self._validate_index(index)
+        self.sounds[index]['settings'].name = name
+
+    def set_interval_per_id(self, index: int, interval: float):
+        self._validate_index(index)
+        self.sounds[index]['settings'].interval = interval
+        
+    def set_volume_per_id(self, index: int, volume: float):
+        self._validate_index(index)
+        self.sounds[index]['settings'].volume = volume
+        self.sounds[index]['sound'].set_volume(volume)
 
 class _sound_settings:
     """0112 2025
