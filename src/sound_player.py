@@ -16,15 +16,18 @@ class sound_player:
             raise Exception("Pygame mixer not initialized.")
         if not filepaths:
             raise ValueError("No filepaths provided to sound_player.")
-        
+
         # Initialize sound settings
         self._settings = _sound_settings()
-        self._settings.files = [_sound_file_setting(file, mixer.Sound(file)) for file in filepaths]
+        self._settings.files = [_sound_file_setting(file) for file in filepaths]
         self._settings.repeat = False
         self._settings.shuffle = False
         self._settings.keybind = ""  # Global keybind for this sound player
         self._settings.interval = 0.05  # default interval between repeats in seconds
         self._settings.channel_volume = 0.5
+        
+        # Make set: _sound_file_setting -> mixer.Sound
+        self.sounds = {file_setting: mixer.Sound(file_setting.filepath) for file_setting in self._settings.files}
         
         # Setup variables for playback control
         self.repeat_thread = None
@@ -44,9 +47,9 @@ class sound_player:
 
     def play_sound_once(self):
         if self._settings.shuffle:
-            sound = self._settings.files[random.randint(0, len(self._settings.files) - 1)].sound
+            sound = random.choice(list(self.sounds.values()))
         else:
-            sound = self._settings.files[self._current_sound_index].sound
+            sound = self.sounds[self._settings.files[self._current_sound_index]]
             self._current_sound_index = (self._current_sound_index + 1) % len(self._settings.files)
         self.channel.play(sound)
 
@@ -59,9 +62,9 @@ class sound_player:
     def _repeat_loop(self):
         while self._settings.repeat:
             if self._settings.shuffle:
-                sound = self._settings.files[random.randint(0, len(self._settings.files) - 1)].sound
+                sound = random.choice(list(self.sounds.values()))
             else:
-                sound = self._settings.files[self._current_sound_index].sound
+                sound = self.sounds[self._settings.files[self._current_sound_index]]
                 self._current_sound_index = (self._current_sound_index + 1) % len(self._settings.files)
             self.channel.play(sound)
             while self.channel.get_busy() and self._settings.repeat:  # Wait until the sound has finished playing
@@ -75,7 +78,7 @@ class sound_player:
         self.channel.fadeout(1000)
     
     def set_volume(self, value):
-        self._settings.volume = float(value)
+        self._settings.channel_volume = float(value)
         self.channel.set_volume(self._settings.channel_volume)
     
     def set_interval(self, value):
@@ -130,7 +133,7 @@ class sound_player:
         return self._settings.shuffle
     
     def get_filepaths(self):
-        return [file[0] for file in self._settings.files]
+        return [file.filepath for file in self._settings.files]
 
 class _sound_settings:
     """0112 2025
@@ -140,7 +143,6 @@ class _sound_settings:
         self.repeat = False
         self.shuffle = False
         self.interval = 0.05
-        # [filepath, Sound, Volume, Interval]
         self.files = []
         self.channel_volume : float = 0.5  
         self.keybind = ""
@@ -149,8 +151,8 @@ class _sound_settings:
         return "str of _sound_settings: \n" + "Repeats: " + str(self.repeat) + ", Shuffle: " +  str(self.shuffle)
     
 class _sound_file_setting:
-    def __init__(self, filepath: str, sound: mixer.Sound, volume: float = 0.5, interval: float = 0.05):
+    def __init__(self, filepath: str, volume: float = 0.5, interval: float = 0.05):
+        self.name = filepath.split("/")[-1]  # Extract the file name from the path
         self.filepath = filepath
-        self.sound = sound
         self.volume = volume
         self.interval = interval
