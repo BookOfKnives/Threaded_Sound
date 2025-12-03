@@ -54,20 +54,17 @@ class Sound_panel(ttk.Frame):
 
 
         # Setup control buttons and sliders
-        self.startButton = ttk.Button(self, text="Play", command=self.player.play_sound_once, width=6, style=self.button_style_name)
+        self.startButton = ttk.Button(self, text="▶", command=self.player.play, width=3, style=self.button_style_name)
         self.startButton.grid(column=0, row=1)
 
-        self.stopButton = ttk.Button(self, text="Stop", command=self.player.stop_repeat_sound, width=6, style=self.button_style_name)
+        self.stopButton = ttk.Button(self, text="⏹", command=self.player.stop_repeat_sound, width=3, style=self.button_style_name)
         self.stopButton.grid(column=1, row=1)
 
-        self.repeatButton = ttk.Button(self, text="Repeat", command=self.player.play_sound_repeat, width=6, style=self.button_style_name)
+        self.repeatButton = ttk.Button(self, text="🔁", command=self.toggle_repeat, width=3, style=self.button_style_name)
         self.repeatButton.grid(column=2, row=1)
+        self.update_repeat_button()
 
-        # self.shuffleButton = ttk.Checkbutton(self, text="Shuffle")
-        # self.shuffleButton.grid(column=3, row=1)
-        # self.shuffleButton.config(command=self.toggle_shuffle)
-
-        self.volume_label = ttk.Label(self, text="VOL", style=self.label_style_name)
+        self.volume_label = ttk.Label(self, text="🔊", style=self.label_style_name)
         self.volume_label.grid(column=3, row=1)
 
         self.volumeSlider = ttk.Scale(self, orient="horizontal", command=lambda value: self.player.set_volume(value), style=self.scale_style_name)
@@ -119,6 +116,23 @@ class Sound_panel(ttk.Frame):
 
     def toggle_shuffle(self):
         self.player.set_shuffle(not self.player.get_shuffle())
+    
+    def toggle_repeat(self):
+        """Toggle repeat mode and update button appearance"""
+        new_repeat = not self.player.get_repeat()
+        self.player.set_repeat(new_repeat)
+        self.update_repeat_button()
+    
+    def update_repeat_button(self):
+        """Update repeat button style based on repeat state"""
+        if self.player.get_repeat():
+            # Create a pressed/active style for repeat button
+            style = ttk.Style()
+            style.map(self.button_style_name, 
+                     relief=[('pressed', 'sunken'), ('!pressed', 'sunken')])
+            self.repeatButton.state(['pressed'])
+        else:
+            self.repeatButton.state(['!pressed'])
 
     def setInterval(self, value):
         fvalue = round(float(value), 3)
