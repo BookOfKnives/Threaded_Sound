@@ -2,6 +2,7 @@ from pygame import mixer
 import pygame
 import random
 import threading
+import json_saver
 
 """0112 2025
 10:57
@@ -75,7 +76,7 @@ class sound_player:
         self.channel.fadeout(1000)
     
     def set_volume(self, value):
-        self._settings.volume = float(value)
+        self._settings.channel_volume = float(value)
         self.channel.set_volume(self._settings.channel_volume)
     
     def set_interval(self, value):
@@ -132,6 +133,10 @@ class sound_player:
     def get_filepaths(self):
         return [file[0] for file in self._settings.files]
 
+    def save_settings(self):
+        json_saver.save_settings(self)
+
+
 class _sound_settings:
     """0112 2025
     11:00
@@ -148,6 +153,7 @@ class _sound_settings:
     def __str__(self):
         return "str of _sound_settings: \n" + "Repeats: " + str(self.repeat) + ", Shuffle: " +  str(self.shuffle)
     
+
 class _sound_file_setting:
     def __init__(self, filepath: str, sound: mixer.Sound, volume: float = 0.5, interval: float = 0.05):
         self.filepath = filepath
