@@ -27,8 +27,11 @@ class sound_player:
         self._settings.interval = 0.05  # default interval between repeats in seconds
         self._settings.channel_volume = 0.5
         
-        # Make set: _sound_file_setting -> mixer.Sound
-        self.sounds = {file_setting: mixer.Sound(file_setting.filepath) for file_setting in self._settings.files}
+        # Create sound objects for each file
+        self.sounds = {}
+        for i, file_setting in enumerate(self._settings.files):
+            sound = mixer.Sound(file_setting.filepath)
+            self.sounds[i] = {'sound': sound, 'settings': file_setting}
         
         # Setup variables for playback control
         self.repeat_thread = None
@@ -48,9 +51,9 @@ class sound_player:
 
     def play_sound_once(self):
         if self._settings.shuffle:
-            sound = random.choice(list(self.sounds.values()))
+            sound = self.sounds[random.choice(list(self.sounds.keys()))]['sound']
         else:
-            sound = self.sounds[self._settings.files[self._current_sound_index]]
+            sound = self.sounds[self._current_sound_index]['sound']
             self._current_sound_index = (self._current_sound_index + 1) % len(self._settings.files)
         self.channel.play(sound)
 

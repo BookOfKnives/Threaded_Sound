@@ -4,10 +4,11 @@ from tkinter import ttk
 
 from pygame import mixer
 
+import keybind_manager
 import sound_player
 
 class sound_panel_settings(tk.Toplevel):
-    def __init__(self, parent, player : sound_player.sound_player, panel_name: str = "Sound Panel", keybind_manager=None):
+    def __init__(self, parent, player : sound_player.sound_player, panel_name: str = "Sound Panel", keybind_manager : keybind_manager =None):
         super().__init__(parent)
         self.player = player
         self.keybind_manager = keybind_manager
@@ -59,10 +60,9 @@ class sound_panel_settings(tk.Toplevel):
         
         # Create _sound_setting for each sound
         self.sound_settings = []
-        for i, (sound, filepath) in enumerate(zip(self.player.sounds, self.player.get_filepaths())):
-            filename = Path(filepath).name
-            sound_setting = _sound_setting(scrollable_frame, sound, filename)
-            sound_setting.grid(column=0, row=i, sticky="ew", padx=5, pady=2)
+        for row, index in enumerate(self.player.get_sound_indexes()):
+            sound_setting = _sound_setting(scrollable_frame, self.player, index)
+            sound_setting.grid(column=0, row=row, sticky="ew", padx=5, pady=2)
             self.sound_settings.append(sound_setting)
         
         canvas.grid(column=0, row=1, sticky="nsew", padx=5, pady=5)
@@ -95,20 +95,64 @@ class sound_panel_settings(tk.Toplevel):
         self.player.set_keybind(new_keybind)
 
 class _sound_setting(ttk.Frame):
-    def __init__(self, parent, sound: mixer.Sound, filepath: str):
+    def __init__(self, parent, player: sound_player.sound_player, index: int):
         super().__init__(parent)
+        self.player = player
+        self.index = index
         
-        self.label = ttk.Label(self, text=filepath)
+        # Get initial values from player
+        name = self.player.get_name_per_id(index)
+        volume = self.player.get_volume_per_id(index)
+        interval = self.player.get_interval_per_id(index)
+        
+        self.label = ttk.Label(self, text=name)
         self.label.grid(column=0, row=0, padx=5, pady=5, sticky="w")
         
-        self.volume = ttk.Label(self, text="Vol")
-        self.volume.grid(column=1, row=0, padx=5, pady=5)
+        self.volume_label = ttk.Label(self, text="🔊")
+        self.volume_label.grid(column=1, row=0, padx=5, pady=5)
         
-        self.vscale = ttk.Scale(self, orient="horizontal")
+        self.vscale = ttk.Scale(self, orient="horizontal", from_=0.0, to=1.0, command=self._on_volume_change)
+        self.vscale.set(volume)
         self.vscale.grid(column=2, row=0, padx=5, pady=5, sticky="ew")
         
-        self.interval = ttk.Label(self, text="Interval")
-        self.interval.grid(column=3, row=0, padx=5, pady=5)
+        self.interval_label = ttk.Label(self, text="⏳")
+        self.interval_label.grid(column=3, row=0, padx=5, pady=5)
         
-        self.iscale = ttk.Scale(self, orient="horizontal")
-        self.iscale.grid(column=4, row=0, padx=5, pady=5, sticky="ew")
+        # Add editable entry for interval value
+        self.interval_var = tk.StringVar(value=f"{interval:.2f}")
+        self.interval_entry = ttk.Entry(self, textvariable=self.interval_var, width=8)
+        self.interval_entry.grid(column=4, row=0, padx=5, pady=5)
+        self.interval_entry.bind("<Return>", self._on_interval_entry_change)
+        self.interval_entry.bind("<FocusOut>", self._on_interval_entry_change)
+        
+        self.iscale = ttk.Scale(self, orient="horizontal", from_=0.01, to=5.0, command=self._on_interval_change)
+        self.iscale.set(interval)
+        self.iscale.grid(column=5, row=0, padx=5, pady=5, sticky="ew")
+        
+        # Make scales expand
+        self.columnconfigure(2, weight=1)
+        self.columnconfigure(4, weight=1)
+    
+    def _on_volume_change(self, value):
+        """Update volume through player"""
+        self.player.set_volume_per_id(self.index, float(value))
+    
+    def _on_interval_change(self, value):
+        """Update interval through player and entry box"""
+        interval = float(value)
+        self.player.set_interval_per_id(self.index, interval)
+        self.interval_var.set(f"{interval:.2f}")
+    
+    def _on_interval_entry_change(self, event=None):
+        """Update interval from entry box"""
+        try:
+            interval = float(self.interval_var.get())
+            # Clamp to valid range
+            interval = max(0.01, min(5.0, interval))
+            self.player.set_interval_per_id(self.index, interval)
+            self.iscale.set(interval)
+            self.interval_var.set(f"{interval:.2f}")
+        except ValueError:
+            # Reset to current value if invalid input
+            current = self.player.get_interval_per_id(self.index)
+            self.interval_var.set(f"{current:.2f}")

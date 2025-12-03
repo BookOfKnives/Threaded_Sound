@@ -36,16 +36,16 @@ class Sound_panel(ttk.Frame):
 
         #setup name frame
         self.name_frame = ttk.Frame(self, relief="raised", style=self.style_name)
-        self.name_frame.grid(column=0, row=0, columnspan=5, sticky="ew")
+        self.name_frame.grid(column=0, row=0, columnspan=8, sticky="ew")
 
         self.name = ttk.Label(self.name_frame, text=Path(filepaths[0]).name if filepaths else "Sound Panel", style=self.label_style_name)
         self.name.grid(column=0, row=0, sticky="w", padx=5)
 
         self.editNameButton = ttk.Button(self.name_frame, text="✏", command=self.edit_name, width=3, style=self.button_style_name)
-        self.editNameButton.grid(column=1, row=0, sticky="w", padx=0)
+        self.editNameButton.grid(column=1, row=0, sticky="e", padx=0)
 
         self.settingsButton = ttk.Button(self.name_frame, text="⚙", command=self.open_settings, width=3, style=self.button_style_name)
-        self.settingsButton.grid(column=2, row=0, sticky="w", padx=0)
+        self.settingsButton.grid(column=2, row=0, sticky="e", padx=0)
 
         self.closeButton = ttk.Button(self.name_frame, text="X", command=self.close, width=3, style=self.button_style_name)
         self.closeButton.grid(column=3, row=0, sticky="e", padx=0)
@@ -72,8 +72,23 @@ class Sound_panel(ttk.Frame):
         self.volumeSlider.grid(column=4, row=1, sticky="ew")
         self.volumeSlider.bind('<MouseWheel>', self.mouse_wheel_adjust_volume)
         
-        # Make the slider column expand
+        # Add interval controls
+        self.interval_label = ttk.Label(self, text="⏳", style=self.label_style_name)
+        self.interval_label.grid(column=5, row=1, padx=5)
+        
+        self.interval_var = tk.StringVar(value=f"{self.player.get_interval():.2f}")
+        self.interval_entry = ttk.Entry(self, textvariable=self.interval_var, width=6)
+        self.interval_entry.grid(column=7, row=1, padx=5)
+        self.interval_entry.bind("<Return>", self.on_interval_entry_change)
+        self.interval_entry.bind("<FocusOut>", self.on_interval_entry_change)
+        
+        self.intervalSlider = ttk.Scale(self, orient="horizontal", from_=0.01, to=5.0, command=self.on_interval_change, style=self.scale_style_name)
+        self.intervalSlider.set(self.player.get_interval())
+        self.intervalSlider.grid(column=6, row=1, sticky="ew")
+        
+        # Make the slider columns expand
         self.columnconfigure(4, weight=1)
+        self.columnconfigure(6, weight=1)
     
     def update_bg_color(self, new_bg_color):
         """Update the background color of the panel and all its widgets"""
@@ -96,6 +111,26 @@ class Sound_panel(ttk.Frame):
         else:
             self.player.set_volume(self.player.get_volume() - adjustment_step)
             self.volumeSlider.set(self.player.get_volume() - adjustment_step)
+    
+    def on_interval_change(self, value):
+        """Update interval from slider"""
+        interval = float(value)
+        self.player.set_interval(interval)
+        self.interval_var.set(f"{interval:.2f}")
+    
+    def on_interval_entry_change(self, event=None):
+        """Update interval from entry box"""
+        try:
+            interval = float(self.interval_var.get())
+            # Clamp to valid range
+            interval = max(0.01, min(5.0, interval))
+            self.player.set_interval(interval)
+            self.intervalSlider.set(interval)
+            self.interval_var.set(f"{interval:.2f}")
+        except ValueError:
+            # Reset to current value if invalid input
+            current = self.player.get_interval()
+            self.interval_var.set(f"{current:.2f}")
 
     def close(self):
         """Clean up resources before destroying the panel"""
